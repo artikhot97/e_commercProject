@@ -1,0 +1,5 @@
+.ecommenv/
+.vscode/*
+*.pyc
+ecommenv/*
+
