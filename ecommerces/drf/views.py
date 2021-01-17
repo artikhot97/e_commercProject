@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
 from rest_framework import generics
 from rest_framework import authentication, permissions
-from .serializers import (RegisterSerializer,LoginSerializer,UserRoleSerializer,UserRoleCreateSerializer,ProductSerializer,OrderSerializer)
+from .serializers import (UserSerializer,LoginSerializer,UserRoleSerializer,UserRoleCreateSerializer,ProductSerializer,OrderSerializer)
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from datetime import datetime
@@ -35,10 +35,8 @@ class RegistrationAPI(APIView):
     This API for Register User
     """
     def get(self, request, format=None):
-        serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid()
-        user = serializer.save()
-        if user:
+        serializer = UserSerializer(data=request.data)
+        if serializer:
             return Response({
                 'username': user.username,
                 'first_name':user.first_name,
@@ -68,7 +66,7 @@ class LogoutView(APIView):
     """
     This API for Logout Views
     """
-    permission_classes = (IsAuthenticated,TokenAuthentication)  
+    # permission_classes = (IsAuthenticated,TokenAuthentication)  
     def get(self, request):
         django_logout(request)
         return Response({
@@ -114,10 +112,10 @@ class ListOfUserRole(APIView):
 @csrf_exempt
 @is_valid_token()
 def product_list(request):
-     """
+    """
     This API for display Product List
     """
-    permission_classes = (IsAuthenticated,TokenAuthentication)
+    permission_classes = (IsAuthenticated,TokenAuthentication,)
     queryset = Product.objects.all()
     serializer = ProductSerializer(data=queryset.data)
     return Response({'prodcut_list':serializer.data})
@@ -127,7 +125,7 @@ class OrderCreate(APIView):
     """
     This API for OrderCreate 
     """
-    permission_classes = (IsAuthenticated,)  
+    # permission_classes = (IsAuthenticated,)  
     def get(self, request,format=None):
         serializer = OrderCreateSerializer(data=request.data)
         serializer.is_valid()
@@ -143,7 +141,7 @@ class ListOfOrder(APIView):
     """
     This API for ListOfOrder 
     """
-    permission_classes = (IsAuthenticated,TokenAuthentication,)  
+    # permission_classes = (IsAuthenticated,TokenAuthentication,)
     def get(self, format=None):
         user_role_list = User.objects.filter(is_active=1)
         serializer = OrderSerializer(user_role_list,many=True)
@@ -151,7 +149,7 @@ class ListOfOrder(APIView):
 
 #order place for use
 class OrderPlace(APIView):
-    permission_classes = (IsAuthenticated,TokenAuthentication,)  
+    # permission_classes = (IsAuthenticated,TokenAuthentication,)  
     def get(self, request, format=None):
         token_key = request.META.get('HTTP_AUTHORIZATION', None)
         if token_key is not None:
@@ -180,7 +178,7 @@ class OrderPlace(APIView):
 
 #accept order
 class AcceptOrder(APIView):
-    permission_classes = (IsAuthenticated,TokenAuthentication,)  
+    # permission_classes = (IsAuthenticated,TokenAuthentication,)  
     def get(self, request, format=None):
         token_key = request.META.get('HTTP_AUTHORIZATION', None)
         if token_key is not None:
@@ -204,7 +202,7 @@ class AcceptOrder(APIView):
 @csrf_exempt
 @is_valid_token()
 def search_product(request):
-    permission_classes = (IsAuthenticated,TokenAuthentication)  
+    # permission_classes = (IsAuthenticated,TokenAuthentication)  
     query = request.GET.get('query', None)
     if query is not None:
         qs1 = Product.objects.filter(product_name__icontains = query)

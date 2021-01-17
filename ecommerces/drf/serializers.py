@@ -6,15 +6,59 @@ from rest_framework import exceptions
 from .models import UserRole,Product,Order,OrderItem
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        users = User.objects.create_user(**validated_data)
-        return users
+from drf.models import User, CustomUser
+
+
+class CustomUserSerializer(serializers.ModelSerializer):
 
     class Meta:
+        model = CustomUser
+        fields = ('role')
+
+
+class UserSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(required=True)
+
+    """
+    However UserSerializer is a bit more complicated. Because we need the UserCustom to be serialized/deserialized as 
+    part of the User model we created a Writable Nested Serializer as defined in the DRF documentation. 
+    That is, a serializer that uses another serializer for a particular field ( user in this case).
+    """
+    class Meta:
         model = User
-        fields = ('username', 'password', 'email', 'first_name','last_name','is_active')
+        fields = ('email', 'first_name', 'last_name', 'password','is_active' 'user')
         extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        us_data = validated_data.pop('user')
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        CustomUser.objects.create(user=user, **us_data)
+        return user
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user')
+        data = instance.user
+
+        instance.email = validated_data.get('email', instance.email)
+        instance.save()
+
+        data.role = user_data.get('role', data.role)
+        data.save()
+
+        return instance
+
+# class RegisterSerializer(serializers.ModelSerializer):
+#     def create(self, validated_data):
+#         users = User.objects.create_user(**validated_data)
+#         return users
+
+#     class Meta:
+#         model = User
+#         fields = ('username', 'password', 'email', 'first_name','last_name','is_active')
+#         extra_kwargs = {'password': {'write_only': True}}
 
 
 class LoginSerializer(serializers.ModelSerializer):
